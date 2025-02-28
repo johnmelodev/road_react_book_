@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useState } from 'react';
 
 const App = () => {
   const stories = [
@@ -21,14 +20,14 @@ const App = () => {
     },
   ];
 
-  const [searchTerm, setSearchTerm] = useState('React');
+  const [searchTerm, setSearchTerm] = React.useState('React');
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
   };
 
-  const searchedStories = stories.filter((story) =>
-    story.title.toLowerCase().includes(searchTerm.toLowerCase())
+  const searchedStories = stories.filter(({ title }) =>
+    title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -64,14 +63,14 @@ const List = ({ list }) => (
   </ul>
 );
 
-const Item = ({ item }) => (
+const Item = ({ item: { title, url, author, num_comments, points } }) => (
   <li>
     <span>
-      <a href={item.url}>{item.title}</a>
+      <a href={url}>{title}</a>
     </span>
-    <span>{item.author}</span>
-    <span>{item.num_comments}</span>
-    <span>{item.points}</span>
+    <span>{author}</span>
+    <span>{num_comments}</span>
+    <span>{points}</span>
   </li>
 );
 
