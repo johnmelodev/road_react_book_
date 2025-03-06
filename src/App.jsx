@@ -1,4 +1,21 @@
-import {useState, useEffect} from 'react';
+  import { useState, useEffect } from 'react';
+
+// Custom Hook: Encapsula a lógica de sincronização com o localStorage
+const useStorageState = (key, initialState) => {
+  // Usa o useState para gerenciar o estado local
+  const [value, setValue] = useState(
+    // Recupera o valor do localStorage usando a chave fornecida ou usa o estado inicial
+    localStorage.getItem(key) || initialState
+  );
+
+  // Usa o useEffect para sincronizar o estado com o localStorage sempre que 'value' ou 'key' mudar
+  useEffect(() => {
+    localStorage.setItem(key, value); // Salva o valor no localStorage com a chave fornecida
+  }, [value, key]); // Dependências: 'value' e 'key'
+
+  // Retorna o estado e a função de atualização como um array
+  return [value, setValue];
+};
 
 const App = () => {
   const stories = [
@@ -20,15 +37,9 @@ const App = () => {
     },
   ];
 
-  const [searchTerm, setSearchTerm] = useState(
-    // define que o local storage usando a notacao search vai ser a primeira opcao. caso nao tenha nada salvo vai iniciar como 'React'
-    localStorage.getItem('search') || 'React'
-  );
-
-  useEffect(() => {
-    // 'search'chave de notacao que guarda o valor searchTerm
-    localStorage.setItem('search', searchTerm);
-  }, [searchTerm]);
+  // Usando o custom hook useStorageState para gerenciar o estado de searchTerm
+  // A chave 'search' é usada para armazenar o valor no localStorage
+  const [searchTerm, setSearchTerm] = useStorageState('search', 'React');
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
