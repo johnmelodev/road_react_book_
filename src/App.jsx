@@ -1,4 +1,8 @@
+<<<<<<< HEAD
   import { useState, useEffect } from 'react';
+=======
+import { useState } from 'react';
+>>>>>>> 2697b49 (InputWithLabel Search bar)
 
 // Custom Hook: Encapsula a lógica de sincronização com o localStorage
 const useStorageState = (key, initialState) => {
