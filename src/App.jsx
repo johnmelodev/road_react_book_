@@ -1,23 +1,14 @@
-<<<<<<< HEAD
-  import { useState, useEffect } from 'react';
-=======
-import { useState } from 'react';
->>>>>>> 2697b49 (InputWithLabel Search bar)
+import * as React from 'react';
 
-// Custom Hook: Encapsula a lógica de sincronização com o localStorage
 const useStorageState = (key, initialState) => {
-  // Usa o useState para gerenciar o estado local
-  const [value, setValue] = useState(
-    // Recupera o valor do localStorage usando a chave fornecida ou usa o estado inicial
+  const [value, setValue] = React.useState(
     localStorage.getItem(key) || initialState
   );
 
-  // Usa o useEffect para sincronizar o estado com o localStorage sempre que 'value' ou 'key' mudar
-  useEffect(() => {
-    localStorage.setItem(key, value); // Salva o valor no localStorage com a chave fornecida
-  }, [value, key]); // Dependências: 'value' e 'key'
+  React.useEffect(() => {
+    localStorage.setItem(key, value);
+  }, [value, key]);
 
-  // Retorna o estado e a função de atualização como um array
   return [value, setValue];
 };
 
@@ -41,9 +32,10 @@ const App = () => {
     },
   ];
 
-  // Usando o custom hook useStorageState para gerenciar o estado de searchTerm
-  // A chave 'search' é usada para armazenar o valor no localStorage
-  const [searchTerm, setSearchTerm] = useStorageState('search', 'React');
+  const [searchTerm, setSearchTerm] = useStorageState(
+    'search',
+    'React'
+  );
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -57,7 +49,13 @@ const App = () => {
     <div>
       <h1>My Hacker Stories</h1>
 
-      <Search search={searchTerm} onSearch={handleSearch} />
+      <InputWithLabel
+        id="search"
+        value={searchTerm}
+        onInputChange={handleSearch}
+      >
+        <strong>Search:</strong>
+      </InputWithLabel>
 
       <hr />
 
@@ -66,16 +64,23 @@ const App = () => {
   );
 };
 
-const Search = ({ search, onSearch }) => (
-  <div>
-    <label htmlFor="search">Search: </label>
+const InputWithLabel = ({
+  id,
+  value,
+  type = 'text',
+  onInputChange,
+  children,
+}) => (
+  <>
+    <label htmlFor={id}>{children}</label>
+    &nbsp;
     <input
-      id="search"
-      type="text"
-      value={search}
-      onChange={onSearch}
+      id={id}
+      type={type}
+      value={value}
+      onChange={onInputChange}
     />
-  </div>
+  </>
 );
 
 const List = ({ list }) => (
