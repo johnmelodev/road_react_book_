@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
 
 const initialStories = [
   {
@@ -19,9 +19,6 @@ const initialStories = [
   },
 ];
 
-// Adicionada função para simular o carregamento assíncrono dos dados
-// Uma Promise é um objeto que representa uma operação que ocorrerá no futuro (sucesso ou falha).
-// Função assíncrona permite que o código continue executando sem travar a interface enquanto espera a resposta.
 const getAsyncStories = () =>
   new Promise((resolve) =>
     setTimeout(
@@ -31,13 +28,11 @@ const getAsyncStories = () =>
   );
 
 const useStorageState = (key, initialState) => {
-  const [value, setValue] = useState(
+  const [value, setValue] = React.useState(
     localStorage.getItem(key) || initialState
   );
 
-  // useEffect executa uma função sempre que as dependências (value, key) mudam.
-  // Aqui, usamos para salvar o valor atualizado no localStorage.
-  useEffect(() => {
+  React.useEffect(() => {
     localStorage.setItem(key, value);
   }, [value, key]);
 
@@ -45,24 +40,30 @@ const useStorageState = (key, initialState) => {
 };
 
 const App = () => {
-  const [searchTerm, setSearchTerm] = useStorageState('search', 'React');
+  const [searchTerm, setSearchTerm] = useStorageState(
+    'search',
+    'React'
+  );
 
-  // Alterado: Inicializa o estado 'stories' como array vazio para receber os dados de forma assíncrona
-  const [stories, setStories] = useState([]);
+  const [stories, setStories] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(false); // A: Adiciona o estado isLoading para controle do carregamento
+  const [isError, setIsError] = React.useState(false); // B: Adiciona o estado isError para controle de erros
 
-  // useEffect é usado para executar efeitos colaterais, como chamadas de dados, logo após o componente montar.
-  // Aqui, chamamos getAsyncStories, que retorna uma Promise, para simular o carregamento dos dados.
-  useEffect(() => {
-    getAsyncStories().then((result) => {
-      // Quando a Promise é resolvida, atualizamos o estado com os dados recebidos.
-      setStories(result.data.stories);
-    });
+  React.useEffect(() => {
+    setIsLoading(true); // C: Inicia o carregamento definindo isLoading como true
+    getAsyncStories()
+      .then((result) => {
+        setStories(result.data.stories);
+        setIsLoading(false); // C: Finaliza o carregamento definindo isLoading como false após receber os dados
+      })
+      .catch(() => setIsError(true)); // C: Trata erro definindo isError como true caso a requisição falhe
   }, []);
 
   const handleRemoveStory = (item) => {
     const newStories = stories.filter(
       (story) => item.objectID !== story.objectID
     );
+
     setStories(newStories);
   };
 
@@ -89,7 +90,15 @@ const App = () => {
 
       <hr />
 
-      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
+      {isError && <p>Something went wrong ...</p>} {/* D: Renderiza mensagem de erro se houver problema na requisição */}
+      {isLoading ? (
+        <p>Loading ...</p> // D: Renderiza indicador de carregamento enquanto os dados estão sendo buscados
+      ) : (
+        <List
+          list={searchedStories}
+          onRemoveItem={handleRemoveStory}
+        />
+      )}
     </div>
   );
 };
@@ -102,8 +111,9 @@ const InputWithLabel = ({
   isFocused,
   children,
 }) => {
-  const inputRef = useRef();
-  useEffect(() => {
+  const inputRef = React.useRef();
+
+  React.useEffect(() => {
     if (isFocused && inputRef.current) {
       inputRef.current.focus();
     }
@@ -127,7 +137,11 @@ const InputWithLabel = ({
 const List = ({ list, onRemoveItem }) => (
   <ul>
     {list.map((item) => (
-      <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
+      <Item
+        key={item.objectID}
+        item={item}
+        onRemoveItem={onRemoveItem}
+      />
     ))}
   </ul>
 );
