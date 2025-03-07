@@ -1,36 +1,44 @@
-import { useState, useEffect, useRef } from "react";
+import * as React from 'react';
 
 const useStorageState = (key, initialState) => {
-  const [value, setValue] = useState(localStorage.getItem(key) || initialState);
+  const [value, setValue] = React.useState(
+    localStorage.getItem(key) || initialState
+  );
 
-  useEffect(() => {
+  React.useEffect(() => {
     localStorage.setItem(key, value);
   }, [value, key]);
 
   return [value, setValue];
 };
 
-const App = () => {
-  const stories = [
-    {
-      title: "React",
-      url: "https://reactjs.org/",
-      author: "Jordan Walke",
-      num_comments: 3,
-      points: 4,
-      objectID: 0,
-    },
-    {
-      title: "Redux",
-      url: "https://redux.js.org/",
-      author: "Dan Abramov, Andrew Clark",
-      num_comments: 2,
-      points: 5,
-      objectID: 1,
-    },
-  ];
+const initialStories = [
+  {
+    title: 'React',
+    url: 'https://reactjs.org/',
+    author: 'Jordan Walke',
+    num_comments: 3,
+    points: 4,
+    objectID: 0,
+  },
+  {
+    title: 'Redux',
+    url: 'https://redux.js.org/',
+    author: 'Dan Abramov, Andrew Clark',
+    num_comments: 2,
+    points: 5,
+    objectID: 1,
+  },
+];
 
-  const [searchTerm, setSearchTerm] = useStorageState("search", "React");
+const App = () => {
+  // (A) Transformamos a lista de stories em um estado para possibilitar manipulações
+  const [stories, setStories] = React.useState(initialStories);
+
+  const [searchTerm, setSearchTerm] = useStorageState(
+    'search',
+    'React'
+  );
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -39,6 +47,11 @@ const App = () => {
   const searchedStories = stories.filter((story) =>
     story.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // (B) Criamos um manipulador de eventos para remover um item da lista
+  const handleRemoveStory = (item) => {
+    setStories(stories.filter((story) => item.objectID !== story.objectID));
+  };
 
   return (
     <div>
@@ -55,7 +68,8 @@ const App = () => {
 
       <hr />
 
-      <List list={searchedStories} />
+      {/* (C) Passamos a função de remoção para o componente List */}
+      <List list={searchedStories} onRemoveItem={handleRemoveStory} />
     </div>
   );
 };
@@ -63,30 +77,23 @@ const App = () => {
 const InputWithLabel = ({
   id,
   value,
-  type = "text",
+  type = 'text',
   onInputChange,
   isFocused,
   children,
 }) => {
-  // (A) Primeiro, criamos uma ref com o Hook useRef do React.
-  // Esse objeto de referência mantém seu valor persistente durante a vida útil do componente.
-  // Ele possui uma propriedade chamada current, que pode ser alterada.
-  const inputRef = useRef();
+  const inputRef = React.useRef();
 
-  // (C) Em seguida, utilizamos o Hook useEffect para executar o foco no campo de entrada assim que ele for renderizado.
-  useEffect(() => {
+  React.useEffect(() => {
     if (isFocused && inputRef.current) {
-      // (D) Como a ref está associada ao elemento, seu current fornece acesso direto ao campo de entrada.
-      // Chamamos focus() programaticamente, mas somente se isFocused estiver ativo e current existir.
       inputRef.current.focus();
     }
   }, [isFocused]);
 
   return (
     <>
-      <label htmlFor={id}>{children}</label>&nbsp;
-      {/* (B) Depois, passamos essa ref para o atributo ref do elemento JSX.
-          Assim, a instância do elemento fica associada à propriedade current da ref. */}
+      <label htmlFor={id}>{children}</label>
+      &nbsp;
       <input
         ref={inputRef}
         id={id}
@@ -98,15 +105,16 @@ const InputWithLabel = ({
   );
 };
 
-const List = ({ list }) => (
+const List = ({ list, onRemoveItem }) => (
   <ul>
     {list.map((item) => (
-      <Item key={item.objectID} item={item} />
+      // (D) Passamos a função onRemoveItem para cada item
+      <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
     ))}
   </ul>
 );
 
-const Item = ({ item }) => (
+const Item = ({ item, onRemoveItem }) => (
   <li>
     <span>
       <a href={item.url}>{item.title}</a>
@@ -114,7 +122,14 @@ const Item = ({ item }) => (
     <span>{item.author}</span>
     <span>{item.num_comments}</span>
     <span>{item.points}</span>
+    <span>
+      {/* (E) Adicionamos um botão de remoção com um manipulador inline */}
+      <button type="button" onClick={() => onRemoveItem(item)}>
+        Remover
+      </button>
+    </span>
   </li>
 );
 
 export default App;
+
