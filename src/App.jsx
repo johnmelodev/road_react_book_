@@ -1,16 +1,4 @@
-import * as React from 'react';
-
-const useStorageState = (key, initialState) => {
-  const [value, setValue] = React.useState(
-    localStorage.getItem(key) || initialState
-  );
-
-  React.useEffect(() => {
-    localStorage.setItem(key, value);
-  }, [value, key]);
-
-  return [value, setValue];
-};
+import { useState, useEffect, useRef } from 'react';
 
 const initialStories = [
   {
@@ -31,14 +19,52 @@ const initialStories = [
   },
 ];
 
-const App = () => {
-  // (A) Transformamos a lista de stories em um estado para possibilitar manipulações
-  const [stories, setStories] = React.useState(initialStories);
-
-  const [searchTerm, setSearchTerm] = useStorageState(
-    'search',
-    'React'
+// Adicionada função para simular o carregamento assíncrono dos dados
+// Uma Promise é um objeto que representa uma operação que ocorrerá no futuro (sucesso ou falha).
+// Função assíncrona permite que o código continue executando sem travar a interface enquanto espera a resposta.
+const getAsyncStories = () =>
+  new Promise((resolve) =>
+    setTimeout(
+      () => resolve({ data: { stories: initialStories } }),
+      2000
+    )
   );
+
+const useStorageState = (key, initialState) => {
+  const [value, setValue] = useState(
+    localStorage.getItem(key) || initialState
+  );
+
+  // useEffect executa uma função sempre que as dependências (value, key) mudam.
+  // Aqui, usamos para salvar o valor atualizado no localStorage.
+  useEffect(() => {
+    localStorage.setItem(key, value);
+  }, [value, key]);
+
+  return [value, setValue];
+};
+
+const App = () => {
+  const [searchTerm, setSearchTerm] = useStorageState('search', 'React');
+
+  // Alterado: Inicializa o estado 'stories' como array vazio para receber os dados de forma assíncrona
+  const [stories, setStories] = useState([]);
+
+  // useEffect é usado para executar efeitos colaterais, como chamadas de dados, logo após o componente montar.
+  // Aqui, chamamos getAsyncStories, que retorna uma Promise, para simular o carregamento dos dados.
+  useEffect(() => {
+    getAsyncStories().then((result) => {
+      // Quando a Promise é resolvida, atualizamos o estado com os dados recebidos.
+      setStories(result.data.stories);
+    });
+  }, []);
+
+  const handleRemoveStory = (item) => {
+    const newStories = stories.filter(
+      (story) => item.objectID !== story.objectID
+    );
+    setStories(newStories);
+  };
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -47,11 +73,6 @@ const App = () => {
   const searchedStories = stories.filter((story) =>
     story.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // (B) Criamos um manipulador de eventos para remover um item da lista
-  const handleRemoveStory = (item) => {
-    setStories(stories.filter((story) => item.objectID !== story.objectID));
-  };
 
   return (
     <div>
@@ -68,7 +89,6 @@ const App = () => {
 
       <hr />
 
-      {/* (C) Passamos a função de remoção para o componente List */}
       <List list={searchedStories} onRemoveItem={handleRemoveStory} />
     </div>
   );
@@ -82,9 +102,8 @@ const InputWithLabel = ({
   isFocused,
   children,
 }) => {
-  const inputRef = React.useRef();
-
-  React.useEffect(() => {
+  const inputRef = useRef();
+  useEffect(() => {
     if (isFocused && inputRef.current) {
       inputRef.current.focus();
     }
@@ -108,7 +127,6 @@ const InputWithLabel = ({
 const List = ({ list, onRemoveItem }) => (
   <ul>
     {list.map((item) => (
-      // (D) Passamos a função onRemoveItem para cada item
       <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
     ))}
   </ul>
@@ -123,13 +141,11 @@ const Item = ({ item, onRemoveItem }) => (
     <span>{item.num_comments}</span>
     <span>{item.points}</span>
     <span>
-      {/* (E) Adicionamos um botão de remoção com um manipulador inline */}
       <button type="button" onClick={() => onRemoveItem(item)}>
-        Remover
+        Dismiss
       </button>
     </span>
   </li>
 );
 
 export default App;
-
